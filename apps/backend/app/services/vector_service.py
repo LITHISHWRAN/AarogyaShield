@@ -133,6 +133,35 @@ async def delete_policy_vectors(policy_id: str) -> int:
     return count
 
 
+async def search_with_query(query: str, top_k: int = 5) -> list[dict]:
+    """Semantic search with a plain string query.
+
+    Used by the multi-query retrieval step where each query targets a specific
+    concern (coverage, exclusions, premium) rather than joining profile values.
+    """
+    client = get_client()
+    embedder = get_embedder()
+    vector = embedder.encode([query])[0].tolist()
+    results = await client.search(
+        collection_name=settings.QDRANT_COLLECTION_NAME,
+        query_vector=vector,
+        limit=top_k,
+        with_payload=True,
+    )
+    return [
+        {
+            "text": r.payload["text"],
+            "score": r.score,
+            "policy_id": r.payload["policy_id"],
+            "policy_name": r.payload.get("policy_name", ""),
+            "insurer": r.payload.get("insurer", ""),
+            "chunk_index": r.payload.get("chunk_index", 0),
+            "source_document_id": r.payload.get("source_document_id", ""),
+        }
+        for r in results
+    ]
+
+
 async def search_policies(user_profile: dict, top_k: int = 5) -> list[dict]:
     """Semantic search over policy chunks.
 
