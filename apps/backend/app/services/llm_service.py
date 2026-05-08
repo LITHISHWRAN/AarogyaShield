@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import structlog
-from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.config import settings
 
 logger = structlog.get_logger()
 
-_llm: ChatAnthropic | None = None
+_llm: ChatGoogleGenerativeAI | None = None
 
 SYSTEM_PROMPT = """You are AarogyaAid, an empathetic health insurance advisor.
 You only recommend policies based on verified document excerpts provided to you.
@@ -16,13 +16,13 @@ Never invent or assume policy details not present in the provided context.
 Always explain your reasoning using the user's specific profile fields."""
 
 
-def get_llm() -> ChatAnthropic:
+def get_llm() -> ChatGoogleGenerativeAI:
     global _llm
     if _llm is None:
-        _llm = ChatAnthropic(
+        _llm = ChatGoogleGenerativeAI(
             model=settings.LLM_MODEL,
-            anthropic_api_key=settings.ANTHROPIC_API_KEY,
-            max_tokens=settings.LLM_MAX_TOKENS,
+            google_api_key=settings.GOOGLE_API_KEY,
+            max_output_tokens=settings.LLM_MAX_TOKENS,
             temperature=settings.LLM_TEMPERATURE,
         )
     return _llm
