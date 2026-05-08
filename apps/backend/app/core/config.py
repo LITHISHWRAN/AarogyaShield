@@ -54,5 +54,8 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     EMBEDDING_DIMENSION: int = 384
 
+    # RAG
+    RAG_TOP_K: int = 5   # chunks per retrieval query
+
 
 settings = Settings()
