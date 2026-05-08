@@ -39,9 +39,14 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION_NAME: str = "policies"
 
+    # Admin credentials (hash generated via scripts/hash_password.py)
+    ADMIN_USERNAME: str
+    ADMIN_PASSWORD_HASH: str
+
     # LLM
-    ANTHROPIC_API_KEY: str
-    LLM_MODEL: str = "claude-sonnet-4-20250514"
+    GOOGLE_API_KEY: str
+    LLM_PROVIDER: str = "google"
+    LLM_MODEL: str = "gemini-2.5-flash"
     LLM_MAX_TOKENS: int = 2048
     LLM_TEMPERATURE: float = 0.3
 

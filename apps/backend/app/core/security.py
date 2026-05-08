@@ -7,7 +7,8 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24   # 24 h — regular users
+ADMIN_TOKEN_EXPIRE_HOURS = 8            # 8 h  — tighter window for admin sessions
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -26,6 +27,17 @@ def create_access_token(subject: str, expires_delta: Optional[timedelta] = None)
     )
     return jwt.encode(
         {"sub": subject, "exp": expire},
+        settings.APP_SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def create_admin_token(username: str) -> str:
+    """Issues a short-lived JWT that carries role='admin'.
+    Only this function can produce a token with that claim."""
+    expire = datetime.now(timezone.utc) + timedelta(hours=ADMIN_TOKEN_EXPIRE_HOURS)
+    return jwt.encode(
+        {"sub": username, "role": "admin", "exp": expire},
         settings.APP_SECRET_KEY,
         algorithm=ALGORITHM,
     )
