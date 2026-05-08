@@ -26,7 +26,9 @@ class Policy(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name: Mapped[str] = mapped_column(String, nullable=False)
-    provider: Mapped[str] = mapped_column(String, nullable=False)
+    provider: Mapped[str] = mapped_column(String, nullable=False)        # insurer name
+    file_type: Mapped[str] = mapped_column(String(10), nullable=False)   # pdf | txt | json
+    source_document_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)

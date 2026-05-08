@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import io
+import uuid
 
-import pdfplumber
 import structlog
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
@@ -16,6 +15,7 @@ from qdrant_client.models import (
 from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
+from app.ingestion.chunker import Chunk
 
 logger = structlog.get_logger()
 
@@ -52,55 +52,93 @@ async def ensure_collection() -> None:
         logger.info("Qdrant collection created", name=settings.QDRANT_COLLECTION_NAME)
 
 
-def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
-    words = text.split()
-    chunks, start = [], 0
-    while start < len(words):
-        end = min(start + chunk_size, len(words))
-        chunks.append(" ".join(words[start:end]))
-        start += chunk_size - overlap
-    return chunks
+async def store_policy_chunks(
+    chunks: list[Chunk],
+    *,
+    policy_id: str,
+    policy_name: str,
+    insurer: str,
+    file_type: str,
+    source_document_id: str,
+) -> int:
+    """Embed a list of Chunk objects and upsert them into Qdrant.
 
-
-async def ingest_policy_pdf(file_bytes: bytes, filename: str, policy_id: str) -> int:
+    Each point carries full metadata so RAG results are self-contained —
+    no secondary DB lookup is needed for citation at query time.
+    """
     await ensure_collection()
     client = get_client()
     embedder = get_embedder()
 
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        full_text = "\n".join(page.extract_text() or "" for page in pdf.pages)
-
-    chunks = _chunk_text(full_text)
-    vectors = embedder.encode(chunks).tolist()
+    texts = [c.text for c in chunks]
+    vectors = embedder.encode(texts).tolist()
 
     points = [
         PointStruct(
-            id=f"{policy_id}_{i}",
+            id=str(uuid.uuid4()),   # globally unique per chunk
             vector=vec,
-            payload={"policy_id": policy_id, "text": chunk, "filename": filename},
+            payload={
+                "policy_id": policy_id,
+                "policy_name": policy_name,
+                "insurer": insurer,
+                "file_type": file_type,
+                "source_document_id": source_document_id,
+                "chunk_index": chunk.chunk_index,
+                "char_start": chunk.char_start,
+                "char_end": chunk.char_end,
+                "text": chunk.text,
+            },
         )
-        for i, (chunk, vec) in enumerate(zip(chunks, vectors))
+        for chunk, vec in zip(chunks, vectors)
     ]
 
     await client.upsert(collection_name=settings.QDRANT_COLLECTION_NAME, points=points)
-    logger.info("Policy ingested", policy_id=policy_id, chunks=len(points))
+    logger.info("Chunks stored in Qdrant", policy_id=policy_id, count=len(points))
     return len(points)
 
 
 async def delete_policy_vectors(policy_id: str) -> int:
+    """Scroll-then-delete to get an accurate removed-vector count.
+
+    Vectors are deleted before the caller removes the DB record.
+    If the DB delete later fails, orphaned metadata is recoverable;
+    ghost vectors serving wrong results are not.
+    """
     client = get_client()
+    policy_filter = Filter(
+        must=[FieldCondition(key="policy_id", match=MatchValue(value=policy_id))]
+    )
+
+    # Count first via paginated scroll (no payload/vectors needed)
+    count = 0
+    next_offset = None
+    while True:
+        records, next_offset = await client.scroll(
+            collection_name=settings.QDRANT_COLLECTION_NAME,
+            scroll_filter=policy_filter,
+            limit=100,
+            offset=next_offset,
+            with_payload=False,
+            with_vectors=False,
+        )
+        count += len(records)
+        if next_offset is None:
+            break
+
     await client.delete(
         collection_name=settings.QDRANT_COLLECTION_NAME,
-        points_selector=Filter(
-            must=[FieldCondition(key="policy_id", match=MatchValue(value=policy_id))]
-        ),
+        points_selector=policy_filter,
     )
-    logger.info("Vectors deleted", policy_id=policy_id)
-    # Exact deleted count returned in Phase 2 via scroll-before-delete pattern
-    return 0
+    logger.info("Vectors deleted", policy_id=policy_id, count=count)
+    return count
 
 
 async def search_policies(user_profile: dict, top_k: int = 5) -> list[dict]:
+    """Semantic search over policy chunks.
+
+    Returns rich payloads so the LLM can cite policy name, insurer,
+    and chunk position without any secondary lookups.
+    """
     client = get_client()
     embedder = get_embedder()
 
@@ -114,7 +152,15 @@ async def search_policies(user_profile: dict, top_k: int = 5) -> list[dict]:
         with_payload=True,
     )
     return [
-        {"text": r.payload["text"], "score": r.score, "policy_id": r.payload["policy_id"]}
+        {
+            "text": r.payload["text"],
+            "score": r.score,
+            "policy_id": r.payload["policy_id"],
+            "policy_name": r.payload.get("policy_name", ""),
+            "insurer": r.payload.get("insurer", ""),
+            "chunk_index": r.payload.get("chunk_index", 0),
+            "source_document_id": r.payload.get("source_document_id", ""),
+        }
         for r in results
     ]
 
