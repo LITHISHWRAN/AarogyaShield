@@ -1,0 +1,31 @@
+# Dependencies — installed inside the image
+node_modules/
+
+# Production build output — rebuilt by the builder stage
+dist/
+
+# Vite cache
+.cache/
+
+# Secrets — never copy into the image
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Test artefacts
+coverage/
