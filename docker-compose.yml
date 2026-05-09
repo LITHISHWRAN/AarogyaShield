@@ -1,16 +1,24 @@
-version: "3.9"
+# Compose V2 — no 'version' key required
+# Default: development mode with hot reload
+# Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
 
 services:
+
+  # ── Backend ──────────────────────────────────────────────────────────────────
   backend:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
+      target: development
     container_name: aarogya_backend
     env_file: .env
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
+      # Bind-mount source for hot reload in development
       - ./apps/backend:/app
+      # Named volume for Hugging Face model cache — survives rebuilds, avoids re-download
+      - hf_model_cache:/root/.cache/huggingface
     depends_on:
       postgres:
         condition: service_healthy
@@ -21,24 +29,50 @@ services:
     networks:
       - aarogya_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s     # give uvicorn time to boot and init_db() to finish
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
+  # ── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
+      target: development
     container_name: aarogya_frontend
-    env_file: .env
+    environment:
+      VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://localhost:8000}"
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:
+      # Bind-mount source for hot reload
       - ./apps/frontend:/app
-      - /app/node_modules
+      # Named volume isolates node_modules from host filesystem
+      # This prevents host OS node_modules from shadowing the container's
+      - frontend_modules:/app/node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - aarogya_network
     restart: unless-stopped
+    stop_grace_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
 
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: aarogya_postgres
@@ -46,54 +80,104 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Enable checksums for data integrity
+      POSTGRES_INITDB_ARGS: "--data-checksums"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - aarogya_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - aarogya_network
-    restart: unless-stopped
+      start_period: 30s
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
+  # ── Redis ────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: aarogya_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --save 60 1
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --loglevel warning
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      # Named volume persists session data across restarts (AOF + RDB)
+      - redis_data:/data
     ports:
       - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - aarogya_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ── Qdrant ───────────────────────────────────────────────────────────────────
+  qdrant:
+    # Pin to a specific version — 'latest' breaks reproducibility
+    image: qdrant/qdrant:v1.9.2
+    container_name: aarogya_qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
     networks:
       - aarogya_network
     restart: unless-stopped
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: aarogya_qdrant
-    ports:
-      - "${QDRANT_PORT:-6333}:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6333/healthz || exit 1"]
+      # /readyz returns 200 only when Qdrant is initialized and ready to serve
+      test: ["CMD-SHELL", "curl -sf http://localhost:6333/readyz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - aarogya_network
-    restart: unless-stopped
+      start_period: 20s
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
+# ── Networks ──────────────────────────────────────────────────────────────────
 networks:
   aarogya_network:
     driver: bridge
 
+# ── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
   qdrant_data:
+    driver: local
+  hf_model_cache:
+    driver: local
+  frontend_modules:
+    driver: local

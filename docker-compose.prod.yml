@@ -1,0 +1,69 @@
+# Production overrides — merge on top of docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Key differences from dev:
+#   - Production Dockerfile targets (no bind mounts, non-root user, pre-built)
+#   - No source code bind mounts
+#   - Resource limits on every service
+#   - Frontend served by nginx on port 80
+#   - Backend runs with multiple workers
+
+services:
+
+  backend:
+    build:
+      target: production
+    # Remove source bind-mount and model cache mount — both are baked into the image
+    volumes: []
+    environment:
+      WORKERS: "${WORKERS:-4}"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 512M
+
+  frontend:
+    build:
+      target: production
+    ports:
+      - "80:80"
+      - "443:443"
+    # Remove source bind-mount and node_modules volume
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  postgres:
+    # No direct port exposure in production — internal network only
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  redis:
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  qdrant:
+    ports: !reset []
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          memory: 256M
