@@ -1,22 +1,34 @@
 import { create } from 'zustand'
-import type { ChatMessage, UserProfile } from '@/types'
+import type { ChatTurn, RecommendationResponse, UserProfile } from '@/types'
 
 interface AppState {
   sessionId: string
   userProfile: UserProfile | null
-  chatHistory: ChatMessage[]
-  setSessionId: (id: string) => void
+  recommendations: RecommendationResponse | null
+  chatTurns: ChatTurn[]
+  adminToken: string | null
+
   setUserProfile: (profile: UserProfile) => void
-  addMessage: (msg: ChatMessage) => void
+  setRecommendations: (recs: RecommendationResponse) => void
+  addChatTurn: (turn: ChatTurn) => void
   clearChat: () => void
+  setAdminToken: (token: string | null) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
   sessionId: crypto.randomUUID(),
   userProfile: null,
-  chatHistory: [],
-  setSessionId: (id) => set({ sessionId: id }),
+  recommendations: null,
+  chatTurns: [],
+  adminToken: localStorage.getItem('admin_token'),
+
   setUserProfile: (profile) => set({ userProfile: profile }),
-  addMessage: (msg) => set((s) => ({ chatHistory: [...s.chatHistory, msg] })),
-  clearChat: () => set({ chatHistory: [] }),
+  setRecommendations: (recs) => set({ recommendations: recs }),
+  addChatTurn: (turn) => set((s) => ({ chatTurns: [...s.chatTurns, turn] })),
+  clearChat: () => set({ chatTurns: [] }),
+  setAdminToken: (token) => {
+    if (token) localStorage.setItem('admin_token', token)
+    else localStorage.removeItem('admin_token')
+    set({ adminToken: token })
+  },
 }))

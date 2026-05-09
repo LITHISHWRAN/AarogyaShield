@@ -1,4 +1,7 @@
 import axios from 'axios'
+import type { AdminDeleteResponse, AdminPolicy, AdminUploadResponse, ChatResponse, RecommendationResponse, TokenResponse } from '@/types'
+
+// ── Standard API client (user-facing) ────────────────────────────────────────
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -11,39 +14,71 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// ── Admin API client (uses admin JWT) ─────────────────────────────────────────
+
+const adminApi = axios.create({
+  baseURL: '/api/v1',
+})
+
+adminApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
 export const authApi = {
   register: (email: string, password: string, full_name: string) =>
-    api.post('/auth/register', { email, password, full_name }),
+    api.post<TokenResponse>('/auth/register', { email, password, full_name }),
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+    api.post<TokenResponse>('/auth/login', { email, password }),
 }
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
 
 export const chatApi = {
   send: (session_id: string, message: string, user_profile?: object) =>
-    api.post('/chat/', { session_id, message, user_profile }),
+    api.post<ChatResponse>('/chat/', { session_id, message, user_profile }),
+  getSessionInfo: (session_id: string) =>
+    api.get(`/chat/${session_id}/session`),
   clearSession: (session_id: string) =>
     api.delete(`/chat/${session_id}`),
 }
 
+// ── Recommendations ───────────────────────────────────────────────────────────
+
 export const recommendApi = {
   get: (session_id: string, user_profile: object) =>
-    api.post('/recommendations/', { session_id, user_profile }),
+    api.post<RecommendationResponse>('/recommendations/', { session_id, user_profile }),
 }
 
-export const policiesApi = {
-  list: () => api.get('/policies/'),
-  get: (id: string) => api.get(`/policies/${id}`),
+// ── Admin (requires admin JWT stored as admin_token) ──────────────────────────
+
+export const adminAuthApi = {
+  login: (username: string, password: string) => {
+    const form = new URLSearchParams()
+    form.append('username', username)
+    form.append('password', password)
+    return axios.post<TokenResponse>('/api/v1/admin/login', form, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
+  },
 }
 
-export const adminApi = {
-  upload: (file: File) => {
+export const adminPoliciesApi = {
+  list: () => adminApi.get<AdminPolicy[]>('/admin/policies'),
+  upload: (file: File, policy_name: string, insurer: string) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/admin/policies/upload', form, {
+    form.append('policy_name', policy_name)
+    form.append('insurer', insurer)
+    return adminApi.post<AdminUploadResponse>('/admin/policies/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
-  delete: (policy_id: string) => api.delete(`/admin/policies/${policy_id}`),
+  delete: (policy_id: string) =>
+    adminApi.delete<AdminDeleteResponse>(`/admin/policies/${policy_id}`),
 }
 
 export default api
