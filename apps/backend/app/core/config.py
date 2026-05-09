@@ -57,5 +57,8 @@ class Settings(BaseSettings):
     # RAG
     RAG_TOP_K: int = 5   # chunks per retrieval query
 
+    # Chat memory
+    CHAT_MAX_HISTORY_TURNS: int = 20   # turns sent to LLM (full history kept in Redis)
+
 
 settings = Settings()
