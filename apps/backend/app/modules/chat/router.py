@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from app.memory.session_store import get_session_store
 from app.modules.chat import service
 from app.modules.chat.schemas import (
-    ChatRequest,
-    ChatResponse,
     ChatMessage,
+    ChatResponse,
+    ChatRequest,
+    CitedChunk,
     SessionInfoResponse,
 )
 
@@ -25,15 +26,19 @@ async def chat(body: ChatRequest):
         history=[ChatMessage(**m) for m in result["history"]],
         profile_loaded=result["profile_loaded"],
         turn_count=result["turn_count"],
+        intent=result["intent"],
+        cited_chunks=[CitedChunk(**c) for c in result["cited_chunks"]],
+        was_guardrailed=result["was_guardrailed"],
+        grounding_warnings=result["grounding_warnings"],
     )
 
 
 @router.get("/{session_id}/session", response_model=SessionInfoResponse)
 async def get_session_info(session_id: str):
-    """Return session metadata without loading full history.
+    """Session metadata check — no history loaded.
 
     The frontend calls this on page load to decide whether to show the
-    onboarding form (no profile) or jump straight to the chat interface.
+    onboarding form (no profile stored) or the chat interface directly.
     """
     info = await get_session_store().session_info(session_id)
     return SessionInfoResponse(**info)
