@@ -189,13 +189,6 @@ The chat pipeline adds intent classification and guardrails (blocks medical advi
 
 ---
 
-## Deployment
-
-### Frontend → Vercel.
-
-### Backend → Railway
-
----
 
 ## Project structure
 
