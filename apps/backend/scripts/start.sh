@@ -41,7 +41,7 @@ WORKERS="${WORKERS:-2}"
 echo "[start.sh] Starting uvicorn with ${WORKERS} worker(s)..."
 exec uvicorn app.main:app \
     --host 0.0.0.0 \
-    --port 8000 \
+    --port "${PORT:-8000}" \
     --workers "${WORKERS}" \
     --proxy-headers \
     --forwarded-allow-ips='*' \
