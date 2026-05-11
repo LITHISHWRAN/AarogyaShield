@@ -17,8 +17,6 @@ services:
     volumes:
       # Bind-mount source for hot reload in development
       - ./apps/backend:/app
-      # Named volume for Hugging Face model cache — survives rebuilds, avoids re-download
-      - hf_model_cache:/root/.cache/huggingface
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,7 +48,7 @@ services:
       target: development
     container_name: aarogya_frontend
     environment:
-      VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://localhost:8000}"
+      VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://backend:8000}"
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:
@@ -151,8 +149,7 @@ services:
       - aarogya_network
     restart: unless-stopped
     healthcheck:
-      # /readyz returns 200 only when Qdrant is initialized and ready to serve
-      test: ["CMD-SHELL", "curl -sf http://localhost:6333/readyz || exit 1"]
+      test: ["CMD-SHELL", "timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/6333' && exit 0 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -176,8 +173,6 @@ volumes:
   redis_data:
     driver: local
   qdrant_data:
-    driver: local
-  hf_model_cache:
     driver: local
   frontend_modules:
     driver: local

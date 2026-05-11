@@ -31,9 +31,7 @@ export default function AdminLogin() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-100">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 text-white font-bold">
-            A
-          </div>
+          <img src="/logo.png" alt="AarogyaShield" className="h-12 w-12 object-contain mx-auto mb-3" />
           <h1 className="font-bold text-gray-900">Admin Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">AarogyaShield Policy Management</p>
         </div>

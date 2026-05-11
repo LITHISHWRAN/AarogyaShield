@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-
+import asyncio
 import structlog
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
@@ -12,15 +12,14 @@ from qdrant_client.models import (
     PointStruct,
     VectorParams,
 )
-from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
 from app.ingestion.chunker import Chunk
+from app.services.embeddings import get_embedder
 
 logger = structlog.get_logger()
 
 _client: AsyncQdrantClient | None = None
-_embedder: SentenceTransformer | None = None
 
 
 def get_client() -> AsyncQdrantClient:
@@ -28,13 +27,6 @@ def get_client() -> AsyncQdrantClient:
     if _client is None:
         _client = AsyncQdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
     return _client
-
-
-def get_embedder() -> SentenceTransformer:
-    global _embedder
-    if _embedder is None:
-        _embedder = SentenceTransformer(settings.EMBEDDING_MODEL)
-    return _embedder
 
 
 async def ensure_collection() -> None:
@@ -63,19 +55,40 @@ async def store_policy_chunks(
 ) -> int:
     """Embed a list of Chunk objects and upsert them into Qdrant.
 
-    Each point carries full metadata so RAG results are self-contained —
-    no secondary DB lookup is needed for citation at query time.
+    Embeds in small batches with retry/backoff to avoid hitting
+    Google's rate limit (5 req/min on free tier).
     """
     await ensure_collection()
     client = get_client()
-    embedder = get_embedder()
+
+    BATCH_SIZE = 5
+    MAX_RETRIES = 5
+    BASE_DELAY = 15  # seconds
 
     texts = [c.text for c in chunks]
-    vectors = embedder.encode(texts).tolist()
+    vectors: list = []
+
+    for i in range(0, len(texts), BATCH_SIZE):
+        batch = texts[i : i + BATCH_SIZE]
+        for attempt in range(MAX_RETRIES):
+            try:
+                batch_vectors = await get_embedder().aembed_documents(batch)
+                vectors.extend(batch_vectors)
+                logger.info("Batch embedded", batch_start=i, size=len(batch))
+                if i + BATCH_SIZE < len(texts):
+                    await asyncio.sleep(12)  # stay under 5 req/min
+                break
+            except Exception as e:
+                if attempt < MAX_RETRIES - 1:
+                    wait = BASE_DELAY * (2 ** attempt)
+                    logger.warning("Embedding rate limited, retrying", attempt=attempt, wait=wait)
+                    await asyncio.sleep(wait)
+                else:
+                    raise
 
     points = [
         PointStruct(
-            id=str(uuid.uuid4()),   # globally unique per chunk
+            id=str(uuid.uuid4()),
             vector=vec,
             payload={
                 "policy_id": policy_id,
@@ -140,8 +153,7 @@ async def search_with_query(query: str, top_k: int = 5) -> list[dict]:
     concern (coverage, exclusions, premium) rather than joining profile values.
     """
     client = get_client()
-    embedder = get_embedder()
-    vector = embedder.encode([query])[0].tolist()
+    vector = await get_embedder().aembed_query(query)
     results = await client.search(
         collection_name=settings.QDRANT_COLLECTION_NAME,
         query_vector=vector,
@@ -169,10 +181,8 @@ async def search_policies(user_profile: dict, top_k: int = 5) -> list[dict]:
     and chunk position without any secondary lookups.
     """
     client = get_client()
-    embedder = get_embedder()
-
     query = " ".join(str(v) for v in user_profile.values())
-    vector = embedder.encode([query])[0].tolist()
+    vector = await get_embedder().aembed_query(query)
 
     results = await client.search(
         collection_name=settings.QDRANT_COLLECTION_NAME,

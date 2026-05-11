@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -18,10 +18,11 @@ const LIFESTYLE_OPTIONS = [
   { value: 'active', label: 'Regularly active / exercises' },
   { value: 'smoker', label: 'Smoker' },
   { value: 'athlete', label: 'Athlete or high-risk sports' },
+  { value: 'other', label: 'Other (specify below)' },
 ]
 
 const FINANCIAL_BANDS = [
-  'Up to 3 LPA', '3–6 LPA', '6–10 LPA', '10–15 LPA', '15+ LPA',
+  'Up to 3 LPA', '3–6 LPA', '6–10 LPA', '10–15 LPA', '15+ LPA', 'Other',
 ]
 
 const CITY_TIERS = [
@@ -37,13 +38,28 @@ export default function OnboardingPage() {
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [lifestyle, setLifestyle] = useState('sedentary')
+  const [otherLifestyle, setOtherLifestyle] = useState('')
   const [selectedConditions, setSelectedConditions] = useState<string[]>([])
   const [otherCondition, setOtherCondition] = useState('')
   const [financialBand, setFinancialBand] = useState('')
+  const [otherBand, setOtherBand] = useState('')
   const [cityTier, setCityTier] = useState('Tier 1')
-  const [familySize, setFamilySize] = useState('1')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [logoClicks, setLogoClicks] = useState(0)
+  const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleLogoClick = () => {
+    if (logoClickTimer.current) clearTimeout(logoClickTimer.current)
+    const next = logoClicks + 1
+    if (next >= 5) {
+      setLogoClicks(0)
+      navigate('/admin')
+      return
+    }
+    setLogoClicks(next)
+    logoClickTimer.current = setTimeout(() => setLogoClicks(0), 3000)
+  }
 
   const toggleCondition = (c: string) => {
     if (c === 'None') {
@@ -59,8 +75,14 @@ export default function OnboardingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!name.trim() || !age || !financialBand) {
+    const resolvedBand = financialBand === 'Other' ? otherBand.trim() : financialBand
+    const resolvedLifestyle = lifestyle === 'other' ? otherLifestyle.trim() : lifestyle
+    if (!name.trim() || !age || !resolvedBand) {
       setError('Please fill in all required fields.')
+      return
+    }
+    if (lifestyle === 'other' && !resolvedLifestyle) {
+      setError('Please describe your lifestyle.')
       return
     }
 
@@ -72,11 +94,11 @@ export default function OnboardingPage() {
     const profile: UserProfile = {
       name: name.trim(),
       age: Number(age),
-      lifestyle,
+      lifestyle: resolvedLifestyle,
       pre_existing_conditions: conditions,
-      financial_band: financialBand,
+      financial_band: resolvedBand,
       city_tier: cityTier,
-      family_size: Number(familySize),
+      family_size: 1,
     }
 
     setUserProfile(profile)
@@ -85,7 +107,7 @@ export default function OnboardingPage() {
     try {
       const res = await recommendApi.get(sessionId, profile)
       setRecommendations(res.data)
-      navigate('/recommendations')
+      navigate('/dashboard')
     } catch {
       setError('We could not find recommendations right now. Please try again.')
     } finally {
@@ -98,9 +120,13 @@ export default function OnboardingPage() {
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <div className="mb-10 text-center">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white text-xl font-bold shadow">
-            A
-          </div>
+          <img
+            src="/logo.png"
+            alt="AarogyaShield"
+            className="mb-3 h-16 w-16 object-contain mx-auto select-none"
+            onClick={handleLogoClick}
+            draggable={false}
+          />
           <h1 className="text-3xl font-bold text-gray-900">AarogyaShield</h1>
           <p className="mt-2 text-gray-500">
             Let's find the right health plan for you — honestly, transparently.
@@ -133,17 +159,6 @@ export default function OnboardingPage() {
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
               />
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Family size</label>
-                <Input
-                  id="family_size"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={familySize}
-                  onChange={(e) => setFamilySize(e.target.value)}
-                />
-              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">City tier</label>
                 <select
@@ -230,6 +245,15 @@ export default function OnboardingPage() {
                   </label>
                 ))}
               </div>
+              {lifestyle === 'other' && (
+                <input
+                  type="text"
+                  className="mt-3 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="e.g. Yoga practitioner, frequent traveller, physically demanding job…"
+                  value={otherLifestyle}
+                  onChange={(e) => setOtherLifestyle(e.target.value)}
+                />
+              )}
             </div>
           </section>
 
@@ -257,6 +281,15 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
+              {financialBand === 'Other' && (
+                <input
+                  type="text"
+                  className="mt-3 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="e.g. 22 LPA, freelance income, pension…"
+                  value={otherBand}
+                  onChange={(e) => setOtherBand(e.target.value)}
+                />
+              )}
             </div>
           </section>
 

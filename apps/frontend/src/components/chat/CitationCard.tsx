@@ -30,10 +30,13 @@ export default function CitationCard({ chunks }: CitationCardProps) {
               key={chunk.index}
               className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600"
             >
-              <p className="mb-1 font-medium text-gray-700">
-                [{chunk.index}] {chunk.policy_name}
-                <span className="ml-1 font-normal text-gray-400">· {chunk.insurer}</span>
-              </p>
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-100 px-1.5 text-[10px] font-bold text-blue-600">
+                  {chunk.index}
+                </span>
+                <span className="font-medium text-gray-700">{chunk.policy_name}</span>
+                <span className="font-normal text-gray-400">· {chunk.insurer}</span>
+              </div>
               <p className="leading-relaxed">{chunk.text}</p>
             </div>
           ))}

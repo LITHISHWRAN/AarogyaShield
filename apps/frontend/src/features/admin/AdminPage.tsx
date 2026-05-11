@@ -88,9 +88,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       {/* Header */}
       <div className="border-b bg-white px-6 py-4">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <div>
-            <h1 className="font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-500">Policy document management</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="AarogyaShield" className="h-8 w-8 object-contain" />
+            <div>
+              <h1 className="font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-500">Policy document management</p>
+            </div>
           </div>
           <Button variant="secondary" size="sm" onClick={onLogout}>
             Sign out
