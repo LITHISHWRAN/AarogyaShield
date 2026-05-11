@@ -1,15 +1,54 @@
 import { useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
+
+const stripCitations = (text: string) => text.replace(/\s*\[[\d,\s]+\]/g, '')
 import PolicyCard from '@/components/recommendations/PolicyCard'
 import ComparisonTable from '@/components/recommendations/ComparisonTable'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import type { DecisionSummary } from '@/types'
+
+function DecisionSummaryCard({ summary }: { summary: DecisionSummary }) {
+  return (
+    <Card className="border-brand-200 bg-brand-50">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-brand-600">
+            Recommended
+          </p>
+          <p className="text-lg font-bold text-gray-900">{summary.recommended}</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">Why</p>
+          <ul className="space-y-1">
+            {summary.top_reasons.map((r, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-sm text-gray-700">
+                <span className="mt-0.5 shrink-0 text-green-500">✓</span>
+                {stripCitations(r)}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">Main drawback</p>
+          <p className="flex items-start gap-1.5 text-sm text-gray-600">
+            <span className="mt-0.5 shrink-0 text-amber-400">!</span>
+            {stripCitations(summary.main_drawback)}
+          </p>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
 export default function RecommendationsPage() {
   const navigate = useNavigate()
   const { recommendations, userProfile } = useAppStore()
+  const [reasoningOpen, setReasoningOpen] = useState(false)
 
   useEffect(() => {
     if (!recommendations) navigate('/')
@@ -17,7 +56,7 @@ export default function RecommendationsPage() {
 
   if (!recommendations) return null
 
-  const { top_recommendation, alternatives, comparison_table, personalized_reasoning, empathy_note, source_chunks, grounding_warnings } = recommendations
+  const { top_recommendation, alternatives, comparison_table, personalized_reasoning, empathy_note, decision_summary, source_chunks, grounding_warnings } = recommendations
 
   const hasNoData = !top_recommendation
 
@@ -45,11 +84,13 @@ export default function RecommendationsPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8 space-y-8">
 
-        {/* Grounding warnings */}
-        {grounding_warnings.length > 0 && (
+        {/* Grounding warnings — only show citation fabrication issues, not internal profile checks */}
+        {grounding_warnings.some(w => w.includes("does not exist in the retrieved context")) && (
           <Alert variant="warning" title="Transparency notice">
             <ul className="mt-1 list-disc list-inside space-y-0.5 text-xs">
-              {grounding_warnings.map((w, i) => <li key={i}>{w}</li>)}
+              {grounding_warnings
+                .filter(w => w.includes("does not exist in the retrieved context"))
+                .map((w, i) => <li key={i}>{w}</li>)}
             </ul>
           </Alert>
         )}
@@ -65,9 +106,12 @@ export default function RecommendationsPage() {
         {/* Empathy note */}
         {empathy_note && (
           <div className="rounded-2xl bg-brand-50 px-6 py-4 text-sm text-brand-800 border border-brand-100">
-            {empathy_note}
+            {stripCitations(empathy_note)}
           </div>
         )}
+
+        {/* Decision summary — concise verdict before full details */}
+        {decision_summary && <DecisionSummaryCard summary={decision_summary} />}
 
         {/* Top recommendation */}
         {top_recommendation && (
@@ -76,13 +120,21 @@ export default function RecommendationsPage() {
           </div>
         )}
 
-        {/* Personalized reasoning */}
+        {/* Personalized reasoning — collapsed by default */}
         {personalized_reasoning && (
           <Card>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
-              Why this plan fits you
-            </h2>
-            <p className="text-sm leading-relaxed text-gray-700">{personalized_reasoning}</p>
+            <button
+              onClick={() => setReasoningOpen(v => !v)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                Why this plan fits you
+              </h2>
+              <span className={`text-gray-400 transition-transform text-xs ${reasoningOpen ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+            {reasoningOpen && (
+              <p className="mt-3 text-sm leading-relaxed text-gray-700">{stripCitations(personalized_reasoning)}</p>
+            )}
           </Card>
         )}
 
@@ -109,29 +161,6 @@ export default function RecommendationsPage() {
           </div>
         )}
 
-        {/* Source documents */}
-        {source_chunks.length > 0 && (
-          <details className="group">
-            <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700">
-              <span>View source documents ({source_chunks.length} excerpts)</span>
-              <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div className="mt-4 space-y-3">
-              {source_chunks.map((chunk) => (
-                <div
-                  key={chunk.index}
-                  className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600"
-                >
-                  <p className="mb-2 font-medium text-gray-800">
-                    [{chunk.index}] {chunk.policy_name}
-                    <span className="ml-2 font-normal text-gray-400">{chunk.insurer}</span>
-                  </p>
-                  <p className="leading-relaxed">{chunk.text}</p>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
 
         {/* Grounding footnote */}
         <p className="text-center text-xs text-gray-400">

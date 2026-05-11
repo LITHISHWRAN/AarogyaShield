@@ -28,8 +28,8 @@ os.environ.update({
     "ADMIN_PASSWORD_HASH": "$2b$12$testhashabcdefghijklmnopqrstuvwx",
     "GOOGLE_API_KEY": "test-google-api-key",
     "LLM_MODEL": "gemini-2.5-flash",
-    "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
-    "EMBEDDING_DIMENSION": "384",
+    "EMBEDDING_MODEL": "models/embedding-001",
+    "EMBEDDING_DIMENSION": "768",
     "RAG_TOP_K": "5",
     "CHAT_MAX_HISTORY_TURNS": "20",
 })

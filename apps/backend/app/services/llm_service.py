@@ -10,6 +10,7 @@ from app.memory.session_models import SessionData
 logger = structlog.get_logger()
 
 _llm: ChatGoogleGenerativeAI | None = None
+_json_llm: ChatGoogleGenerativeAI | None = None
 
 
 def get_llm() -> ChatGoogleGenerativeAI:
@@ -22,6 +23,24 @@ def get_llm() -> ChatGoogleGenerativeAI:
             temperature=settings.LLM_TEMPERATURE,
         )
     return _llm
+
+
+def get_json_llm() -> ChatGoogleGenerativeAI:
+    """LLM instance with Gemini's native JSON mode enabled.
+
+    Uses model_kwargs to pass response_mime_type — the correct form for
+    langchain-google-genai 2.x. Forces valid JSON output at the model layer.
+    """
+    global _json_llm
+    if _json_llm is None:
+        _json_llm = ChatGoogleGenerativeAI(
+            model=settings.LLM_MODEL,
+            google_api_key=settings.GOOGLE_API_KEY,
+            max_output_tokens=settings.LLM_MAX_TOKENS,
+            temperature=settings.LLM_TEMPERATURE,
+            model_kwargs={"response_mime_type": "application/json"},
+        )
+    return _json_llm
 
 
 # ── Chat response ─────────────────────────────────────────────────────────────

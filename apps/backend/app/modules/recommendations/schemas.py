@@ -54,6 +54,12 @@ class SourceChunk(BaseModel):
     text: str
 
 
+class DecisionSummary(BaseModel):
+    recommended: str
+    top_reasons: list[str]
+    main_drawback: str
+
+
 class RecommendationResponse(BaseModel):
     session_id: str
     top_recommendation: Optional[RecommendedPolicyDetail] = None
@@ -61,5 +67,6 @@ class RecommendationResponse(BaseModel):
     comparison_table: list[ComparisonRow] = []
     personalized_reasoning: str
     empathy_note: str
+    decision_summary: Optional[DecisionSummary] = None
     source_chunks: list[SourceChunk] = []
     grounding_warnings: list[str] = []

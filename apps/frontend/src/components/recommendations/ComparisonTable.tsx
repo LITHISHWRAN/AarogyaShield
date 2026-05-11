@@ -49,7 +49,7 @@ export default function ComparisonTable({ rows, topPolicyName }: ComparisonTable
                     name === topPolicyName && 'font-medium text-gray-800',
                   )}
                 >
-                  {row.values[name] ?? '—'}
+                  {row.values[name] ? row.values[name].replace(/\s*\[[\d,\s]+\]/g, '') : '—'}
                 </td>
               ))}
             </tr>

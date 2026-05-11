@@ -55,16 +55,8 @@ COPY --chown=appuser:appuser . .
 # Make startup script executable before switching users
 RUN chmod +x scripts/start.sh
 
-# Switch to non-root for model download and all subsequent layers
+# Switch to non-root user for all subsequent layers
 USER appuser
-
-# Pre-download the sentence-transformers model.
-# Baking the model into the image eliminates the 2-minute cold-start delay
-# on first request. HF_HOME is scoped to /app/.cache so the appuser owns it.
-ENV HF_HOME=/app/.cache/huggingface
-RUN python -c "\
-from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
 
 EXPOSE 8000
 

@@ -1,10 +1,12 @@
 import axios from 'axios'
 import type { AdminDeleteResponse, AdminPolicy, AdminUploadResponse, ChatResponse, RecommendationResponse, TokenResponse } from '@/types'
 
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+
 // ── Standard API client (user-facing) ────────────────────────────────────────
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${BASE}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -17,7 +19,7 @@ api.interceptors.request.use((config) => {
 // ── Admin API client (uses admin JWT) ─────────────────────────────────────────
 
 const adminApi = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${BASE}/api/v1`,
 })
 
 adminApi.interceptors.request.use((config) => {
@@ -60,7 +62,7 @@ export const adminAuthApi = {
     const form = new URLSearchParams()
     form.append('username', username)
     form.append('password', password)
-    return axios.post<TokenResponse>('/api/v1/admin/login', form, {
+    return axios.post<TokenResponse>(`${BASE}/api/v1/admin/login`, form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
   },

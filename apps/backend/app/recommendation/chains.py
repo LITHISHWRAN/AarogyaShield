@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 from app.modules.recommendations.schemas import (
     ComparisonRow,
+    DecisionSummary,
     RecommendationResponse,
     RecommendedPolicyDetail,
     SourceChunk,
@@ -19,6 +20,7 @@ from app.recommendation.context_builder import (
     resolve_policy_id,
 )
 from app.recommendation.output_parser import (
+    LLMDecisionSummary,
     LLMOutput,
     LLMPolicyRec,
     extract_llm_output,
@@ -27,7 +29,7 @@ from app.recommendation.output_parser import (
 )
 from app.recommendation.prompts import GROUNDED_SYSTEM_PROMPT, build_human_prompt
 from app.recommendation.query_builder import build_retrieval_queries
-from app.services.llm_service import get_llm
+from app.services.llm_service import get_json_llm
 from app.services.vector_service import search_with_query
 
 logger = structlog.get_logger()
@@ -72,15 +74,22 @@ async def run_recommendation_chain(
         HumanMessage(content=build_human_prompt(context_str, profile)),
     ]
 
-    llm = get_llm()
+    llm = get_json_llm()
     llm_response = await llm.ainvoke(messages)
-    logger.info("LLM response received", session_id=session_id)
+    raw_content = llm_response.content
+    logger.info("LLM response received", session_id=session_id, raw_length=len(raw_content))
+    logger.debug("LLM raw output", session_id=session_id, content=raw_content[:500])
 
     # ── 4. Parse structured output ────────────────────────────────────────────
     try:
-        llm_output: LLMOutput = extract_llm_output(llm_response.content)
+        llm_output: LLMOutput = extract_llm_output(raw_content)
     except Exception as exc:
-        logger.error("LLM output parse failed", session_id=session_id, error=str(exc))
+        logger.error(
+            "LLM output parse failed",
+            session_id=session_id,
+            error=str(exc),
+            raw_snippet=raw_content[:300],
+        )
         raise ValueError(f"Failed to parse recommendation output: {exc}") from exc
 
     # ── 5. Validate grounding ─────────────────────────────────────────────────
@@ -152,6 +161,15 @@ def _assemble_response(
         for ch in context_chunks
     ]
 
+    decision_summary: DecisionSummary | None = None
+    if llm_output.decision_summary:
+        ds = llm_output.decision_summary
+        decision_summary = DecisionSummary(
+            recommended=ds.recommended,
+            top_reasons=ds.top_reasons,
+            main_drawback=ds.main_drawback,
+        )
+
     return RecommendationResponse(
         session_id=session_id,
         top_recommendation=top,
@@ -159,6 +177,7 @@ def _assemble_response(
         comparison_table=comparison_table,
         personalized_reasoning=llm_output.personalized_reasoning,
         empathy_note=llm_output.empathy_note,
+        decision_summary=decision_summary,
         source_chunks=source_chunks,
         grounding_warnings=grounding_warnings,
     )
@@ -179,3 +198,8 @@ def _no_context_response(session_id: str) -> RecommendationResponse:
         source_chunks=[],
         grounding_warnings=["No policy documents found in the vector store."],
     )
+
+
+
+
+

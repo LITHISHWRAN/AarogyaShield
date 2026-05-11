@@ -3,6 +3,8 @@ import Card from '@/components/ui/Card'
 import MatchScore from './MatchScore'
 import JargonPill from './JargonPill'
 
+const stripCitations = (text: string) => text.replace(/\s*\[[\d,\s]+\]/g, '')
+
 interface PolicyCardProps {
   policy: RecommendedPolicy
   rank: 'top' | 'alternative'
@@ -41,7 +43,7 @@ export default function PolicyCard({ policy, rank }: PolicyCardProps) {
             {policy.coverage_highlights.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-0.5 shrink-0 text-green-500">✓</span>
-                {item}
+                {stripCitations(item)}
               </li>
             ))}
           </ul>
@@ -56,7 +58,7 @@ export default function PolicyCard({ policy, rank }: PolicyCardProps) {
               {policy.exclusions_noted.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                   <span className="mt-0.5 shrink-0 text-amber-400">!</span>
-                  {item}
+                  {stripCitations(item)}
                 </li>
               ))}
             </ul>

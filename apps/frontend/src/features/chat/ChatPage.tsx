@@ -10,6 +10,8 @@ import { chatApi } from '@/services/api'
 import { useAppStore } from '@/store'
 import type { ChatTurn } from '@/types'
 
+const stripCitations = (text: string) => text.replace(/\s*\[[\d,\s]+\]/g, '')
+
 const QUICK_PROMPTS = [
   'What does my recommended plan cover?',
   'Explain the waiting period',
@@ -144,7 +146,7 @@ export default function ChatPage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
               A
             </div>
-            <span className="font-semibold text-gray-800">AarogyaAid Chat</span>
+            <span className="font-semibold text-gray-800">ShieldCare</span>
           </div>
           <button
             onClick={() => navigate('/recommendations')}
@@ -200,23 +202,15 @@ export default function ChatPage() {
                       : 'bg-white text-gray-800 shadow-sm ring-1 ring-gray-100'
                   }`}
                 >
-                  {turn.content}
+                  {turn.role === 'assistant' ? stripCitations(turn.content) : turn.content}
                 </div>
 
                 {turn.role === 'assistant' && (
                   <div className="mt-1.5 space-y-1.5 px-1">
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      {turn.intent && !['greeting', 'unknown'].includes(turn.intent) && (
-                        <IntentBadge intent={turn.intent} />
-                      )}
-                      {turn.was_guardrailed && (
-                        <span className="text-xs text-amber-600">⚠ Redirected for your safety</span>
-                      )}
-                    </div>
-
-                    {turn.cited_chunks && turn.cited_chunks.length > 0 && (
-                      <CitationCard chunks={turn.cited_chunks} />
+                    {turn.was_guardrailed && (
+                      <span className="text-xs text-amber-600">⚠ Redirected for your safety</span>
                     )}
+
 
                     {turn.grounding_warnings && turn.grounding_warnings.length > 0 && (
                       <p className="text-xs text-gray-400">

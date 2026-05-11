@@ -73,6 +73,12 @@ export interface SourceChunk {
   text: string
 }
 
+export interface DecisionSummary {
+  recommended: string
+  top_reasons: string[]
+  main_drawback: string
+}
+
 export interface RecommendationResponse {
   session_id: string
   top_recommendation: RecommendedPolicy | null
@@ -80,6 +86,7 @@ export interface RecommendationResponse {
   comparison_table: ComparisonRow[]
   personalized_reasoning: string
   empathy_note: string
+  decision_summary: DecisionSummary | null
   source_chunks: SourceChunk[]
   grounding_warnings: string[]
 }

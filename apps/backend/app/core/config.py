@@ -47,13 +47,12 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str
     LLM_PROVIDER: str = "google"
     LLM_MODEL: str = "gemini-2.5-flash"
-    LLM_MAX_TOKENS: int = 2048
+    LLM_MAX_TOKENS: int = 8192
     LLM_TEMPERATURE: float = 0.3
 
-    # Embeddings
-    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    EMBEDDING_DIMENSION: int = 384
-
+    # Embeddings — Google Gemini embedding-001 (768-dim)
+    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
+    EMBEDDING_DIMENSION: int = 3072
     # RAG
     RAG_TOP_K: int = 5   # chunks per retrieval query
 

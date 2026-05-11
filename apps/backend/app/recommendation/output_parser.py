@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 
+from json_repair import repair_json
 from pydantic import BaseModel, Field, field_validator
 
 from app.recommendation.context_builder import ContextChunk, resolve_policy_id
@@ -15,10 +16,10 @@ class LLMPolicyRec(BaseModel):
     policy_name: str
     insurer: str
     match_score: float = Field(ge=0.0, le=1.0)
-    coverage_highlights: list[str]
-    exclusions_noted: list[str]
-    best_for: str
-    citations: list[int]
+    coverage_highlights: list[str] = []
+    exclusions_noted: list[str] = []
+    best_for: str = ""
+    citations: list[int] = []
     jargon_definitions: dict[str, str] = {}
 
     @field_validator("match_score", mode="before")
@@ -28,8 +29,26 @@ class LLMPolicyRec(BaseModel):
 
     @field_validator("citations", mode="before")
     @classmethod
-    def dedupe_citations(cls, v: list[int]) -> list[int]:
-        return sorted(set(v))
+    def dedupe_citations(cls, v: object) -> list[int]:
+        if not isinstance(v, list):
+            return []
+        return sorted({int(i) for i in v if isinstance(i, (int, float))})
+
+    @field_validator("jargon_definitions", mode="before")
+    @classmethod
+    def clean_jargon(cls, v: object) -> dict[str, str]:
+        if not isinstance(v, dict):
+            return {}
+        # Drop entries where the value is not a plain string (LLM sometimes nests
+        # other fields like "alternatives" inside jargon_definitions by mistake)
+        return {k: val for k, val in v.items() if isinstance(val, str)}
+
+    @field_validator("coverage_highlights", "exclusions_noted", mode="before")
+    @classmethod
+    def ensure_str_list(cls, v: object) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [str(i) for i in v if i is not None]
 
 
 class LLMComparisonRow(BaseModel):
@@ -37,12 +56,34 @@ class LLMComparisonRow(BaseModel):
     values: dict[str, str]
 
 
+class LLMDecisionSummary(BaseModel):
+    recommended: str
+    top_reasons: list[str]
+    main_drawback: str
+
+
 class LLMOutput(BaseModel):
     top_recommendation: LLMPolicyRec
     alternatives: list[LLMPolicyRec] = []
     comparison_table: list[LLMComparisonRow] = []
-    personalized_reasoning: str
-    empathy_note: str
+    personalized_reasoning: str = ""
+    empathy_note: str = ""
+    decision_summary: LLMDecisionSummary | None = None
+
+    @field_validator("alternatives", mode="before")
+    @classmethod
+    def ensure_alt_list(cls, v: object) -> list:
+        # Guard against LLM putting a dict or None here
+        if not isinstance(v, list):
+            return []
+        return v
+
+    @field_validator("comparison_table", mode="before")
+    @classmethod
+    def ensure_table_list(cls, v: object) -> list:
+        if not isinstance(v, list):
+            return []
+        return v
 
 
 # ── Parsing ───────────────────────────────────────────────────────────────────
@@ -50,21 +91,31 @@ class LLMOutput(BaseModel):
 def extract_llm_output(text: str) -> LLMOutput:
     """Parse and Pydantic-validate the LLM's JSON response.
 
-    Handles markdown code fences (```json ... ```) that some LLMs emit
-    despite instructions not to, and trailing non-JSON text.
+    Handles:
+    - Markdown fences (```json ... ```) emitted despite JSON-mode instructions
+    - Unescaped quotes / stray characters inside string values (via json-repair)
+    - Trailing non-JSON text after the closing brace
     """
     cleaned = text.strip()
 
-    # Strip opening/closing markdown fences
-    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
-    cleaned = re.sub(r"\s*```$", "", cleaned)
+    # Strip markdown fences — handles both ```json and ``` variants
+    cleaned = re.sub(r"^```(?:json)?\s*\n?", "", cleaned)
+    cleaned = re.sub(r"\n?```\s*$", "", cleaned)
+    cleaned = cleaned.strip()
 
-    # If there is trailing text after the closing brace, truncate
+    # Truncate anything after the final closing brace
     last_brace = cleaned.rfind("}")
     if last_brace != -1:
         cleaned = cleaned[: last_brace + 1]
 
-    data = json.loads(cleaned)
+    # First attempt: strict parse
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError:
+        # Fallback: repair common issues (unescaped quotes, trailing commas, etc.)
+        repaired = repair_json(cleaned, return_objects=False)
+        data = json.loads(repaired)
+
     return LLMOutput.model_validate(data)
 
 
@@ -96,11 +147,10 @@ def validate_citations(output: LLMOutput, context_chunks: list[ContextChunk]) ->
 
 
 def validate_profile_references(reasoning: str, profile: dict) -> list[str]:
-    """Verify that personalized_reasoning explicitly mentions >= 3 profile fields.
+    """Verify that personalized_reasoning explicitly mentions >= 3 profile fields."""
+    if not reasoning.strip():
+        return []
 
-    This enforces that recommendations are personalised, not generic text with
-    profile fields only mentioned superficially.
-    """
     field_signals: dict[str, list[str]] = {
         "name": [str(profile.get("name", "")).lower()],
         "age": [str(profile.get("age", "")), " year", "age"],
