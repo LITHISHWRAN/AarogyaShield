@@ -8,7 +8,6 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.api.v1.router import api_router
 from app.db.session import init_db
-from typing import List
 
 logger = structlog.get_logger()
 
@@ -33,10 +32,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in settings.BACKEND_CORS_ORIGINS.split(",")
-    ],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
