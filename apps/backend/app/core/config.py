@@ -12,31 +12,37 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "https://aarogyashield.onrender.com"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173"]
 
     # PostgreSQL
-    DATABASE_URL: str
     POSTGRES_HOST: str
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
 
-    # @property
-    # def DATABASE_URL(self) -> str:
-    #     return (
-    #         f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-    #         f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-    #     )
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
     # Redis
-    REDIS_URL: str
+    REDIS_HOST: str
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str
+    REDIS_SESSION_TTL: int = 86400
 
     # Qdrant
-    # Qdrant
-    QDRANT_URL: str
-    QDRANT_API_KEY: str
+    QDRANT_HOST: str
+    QDRANT_PORT: int = 6333
     QDRANT_COLLECTION_NAME: str = "policies"
+    QDRANT_API_KEY: str | None = None
+
+    @property
+    def QDRANT_URL(self) -> str:
+        return f"http://{self.QDRANT_HOST}:{self.QDRANT_PORT}"
 
     # Admin credentials (hash generated via scripts/hash_password.py)
     ADMIN_USERNAME: str
