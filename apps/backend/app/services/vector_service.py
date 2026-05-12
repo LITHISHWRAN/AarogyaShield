@@ -79,7 +79,7 @@ async def store_policy_chunks(
                 vectors.extend(batch_vectors)
                 logger.info("Batch embedded", batch_start=i, size=len(batch))
                 if i + BATCH_SIZE < len(texts):
-                    await asyncio.sleep(12)  # stay under 5 req/min
+                    await asyncio.sleep(1)  # stay under 5 req/min
                 break
             except Exception as e:
                 if attempt < MAX_RETRIES - 1:
