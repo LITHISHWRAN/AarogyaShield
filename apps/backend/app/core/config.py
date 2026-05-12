@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     REDIS_SESSION_TTL: int = 86400
 
     # Qdrant
-    QDRANT_HOST: str
+    # Qdrant
+    QDRANT_URL: str
     QDRANT_API_KEY: str
     QDRANT_COLLECTION_NAME: str = "policies"
 
