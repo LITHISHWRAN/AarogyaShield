@@ -11,7 +11,7 @@ set -euo pipefail
 # ── 1. Wait for PostgreSQL ────────────────────────────────────────────────────
 echo "[start.sh] Verifying PostgreSQL connection..."
 
-MAX_RETRIES=15
+MAX_RETRIES=30
 RETRY_COUNT=0
 until pg_isready \
         -h "${POSTGRES_HOST:-postgres}" \
@@ -41,7 +41,7 @@ WORKERS="${WORKERS:-2}"
 echo "[start.sh] Starting uvicorn with ${WORKERS} worker(s)..."
 exec uvicorn app.main:app \
     --host 0.0.0.0 \
-    --port 8000 \
+    --port "${PORT:-8000}" \
     --workers "${WORKERS}" \
     --proxy-headers \
     --forwarded-allow-ips='*' \
