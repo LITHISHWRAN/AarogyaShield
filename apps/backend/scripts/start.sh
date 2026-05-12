@@ -11,7 +11,7 @@ set -euo pipefail
 # ── 1. Wait for PostgreSQL ────────────────────────────────────────────────────
 echo "[start.sh] Verifying PostgreSQL connection..."
 
-MAX_RETRIES=30
+MAX_RETRIES=15
 RETRY_COUNT=0
 until pg_isready \
         -h "${POSTGRES_HOST:-postgres}" \
