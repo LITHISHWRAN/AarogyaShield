@@ -37,7 +37,7 @@ class Settings(BaseSettings):
 
     # Qdrant
     QDRANT_HOST: str
-    QDRANT_PORT: int = 6333
+    QDRANT_API_KEY: str
     QDRANT_COLLECTION_NAME: str = "policies"
 
     # Admin credentials (hash generated via scripts/hash_password.py)
