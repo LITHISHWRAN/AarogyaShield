@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str
     REDIS_SESSION_TTL: int = 86400
+    REDIS_URL: str | None = None   # ← add this line
 
     # Qdrant
     QDRANT_HOST: str
@@ -42,6 +43,8 @@ class Settings(BaseSettings):
 
     @property
     def QDRANT_URL(self) -> str:
+        if self.QDRANT_HOST.startswith("http"):
+            return self.QDRANT_HOST
         return f"http://{self.QDRANT_HOST}:{self.QDRANT_PORT}"
 
     # Admin credentials (hash generated via scripts/hash_password.py)

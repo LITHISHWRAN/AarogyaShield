@@ -36,7 +36,7 @@ echo "[start.sh] PostgreSQL is ready."
 #
 # --proxy-headers: trust X-Forwarded-For from nginx
 # --workers: controlled by WORKERS env var (default 2 for containers with 1-2 vCPU)
-WORKERS="${WORKERS:-2}"
+WORKERS="${WORKERS:-1}"
 
 echo "[start.sh] Starting uvicorn with ${WORKERS} worker(s)..."
 exec uvicorn app.main:app \
