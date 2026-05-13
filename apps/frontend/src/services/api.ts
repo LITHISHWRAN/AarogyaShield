@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AdminDeleteResponse, AdminPolicy, AdminUploadResponse, ChatResponse, RecommendationResponse, TokenResponse } from '@/types'
+import type { AdminDeleteResponse, AdminPolicy, AdminUploadResponse, ChatResponse, Policy, RecommendationResponse, TokenResponse } from '@/types'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -53,6 +53,12 @@ export const chatApi = {
 export const recommendApi = {
   get: (session_id: string, user_profile: object) =>
     api.post<RecommendationResponse>('/recommendations/', { session_id, user_profile }),
+}
+
+// ── Policies (public) ─────────────────────────────────────────────────────────
+
+export const policiesApi = {
+  list: () => api.get<Policy[]>('/policies/'),
 }
 
 // ── Admin (requires admin JWT stored as admin_token) ──────────────────────────

@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import Alert from '@/components/ui/Alert'
-import CitationCard from '@/components/chat/CitationCard'
-import IntentBadge from '@/components/chat/IntentBadge'
+// import CitationCard from '@/components/chat/CitationCard'
+// import IntentBadge from '@/components/chat/IntentBadge'
 import TypingIndicator from '@/components/chat/TypingIndicator'
 import { chatApi } from '@/services/api'
 import { useAppStore } from '@/store'
-import type { ChatTurn } from '@/types'
+// import type { ChatTurn } from '@/types'
 
 const stripCitations = (text: string) => text.replace(/\s*\[[\d,\s]+\]/g, '')
 

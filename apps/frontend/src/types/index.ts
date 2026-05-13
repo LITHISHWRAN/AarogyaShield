@@ -91,6 +91,15 @@ export interface RecommendationResponse {
   grounding_warnings: string[]
 }
 
+// ── Policies (public listing) ─────────────────────────────────────────────────
+
+export interface Policy {
+  id: string
+  name: string
+  provider: string
+  description?: string
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export interface AdminPolicy {

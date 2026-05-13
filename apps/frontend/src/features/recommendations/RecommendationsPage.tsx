@@ -56,7 +56,7 @@ export default function RecommendationsPage() {
 
   if (!recommendations) return null
 
-  const { top_recommendation, alternatives, comparison_table, personalized_reasoning, empathy_note, decision_summary, source_chunks, grounding_warnings } = recommendations
+  const { top_recommendation, alternatives, comparison_table, personalized_reasoning, empathy_note, decision_summary, grounding_warnings } = recommendations
 
   const hasNoData = !top_recommendation
 
