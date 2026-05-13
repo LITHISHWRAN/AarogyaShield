@@ -63,15 +63,15 @@ export default function RecommendationsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-5">
-        <div className="mx-auto max-w-4xl flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
+      <div className="bg-white border-b px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto max-w-4xl flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
               {userProfile ? `Your plans, ${userProfile.name}` : 'Your recommendations'}
             </h1>
-            <p className="text-sm text-gray-500">Based on your profile and uploaded policy documents</p>
+            <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Based on your profile and uploaded policy documents</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate('/')}
               className="text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
