@@ -70,7 +70,7 @@ export default function ChatPage() {
   const conditions = userProfile?.pre_existing_conditions.join(', ') || 'none declared'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-[100dvh] overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r bg-white lg:flex">
         <div className="border-b p-4">
@@ -157,12 +157,12 @@ export default function ChatPage() {
         </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5 lg:px-6">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 sm:px-4 sm:py-6 sm:space-y-5 lg:px-6">
           {/* Empty state with quick prompts */}
           {chatTurns.length === 0 && !loading && (
-            <div className="flex flex-col items-center gap-6 pt-8">
-              <div className="text-center">
-                <p className="text-lg font-semibold text-gray-700">
+            <div className="flex flex-col items-center gap-4 pt-4 sm:gap-6 sm:pt-8">
+              <div className="text-center px-2">
+                <p className="text-base font-semibold text-gray-700 sm:text-lg">
                   {userProfile ? `Hello, ${userProfile.name}!` : 'Hello!'}
                 </p>
                 <p className="mt-1 text-sm text-gray-500">
@@ -187,14 +187,14 @@ export default function ChatPage() {
           {chatTurns.map((turn, i) => (
             <div key={i} className={`flex ${turn.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {turn.role === 'assistant' && (
-                <div className="mr-2 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                <div className="mr-1.5 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white sm:mr-2 sm:h-7 sm:w-7">
                   A
                 </div>
               )}
 
-              <div className="max-w-[80%] min-w-0 lg:max-w-[70%]">
+              <div className="max-w-[85%] min-w-0 sm:max-w-[80%] lg:max-w-[70%]">
                 <div
-                  className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`rounded-2xl px-3 py-2.5 text-sm leading-relaxed sm:px-4 sm:py-3 ${
                     turn.role === 'user'
                       ? 'bg-brand-600 text-white'
                       : turn.was_guardrailed
@@ -222,7 +222,7 @@ export default function ChatPage() {
               </div>
 
               {turn.role === 'user' && (
-                <div className="ml-2 mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">
+                <div className="ml-1.5 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600 sm:ml-2 sm:h-7 sm:w-7">
                   {userProfile?.name?.[0]?.toUpperCase() ?? 'U'}
                 </div>
               )}
@@ -241,8 +241,8 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="border-t bg-white px-4 py-3 lg:px-6">
-          <div className="flex gap-3">
+        <div className="border-t bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-3 lg:px-6">
+          <div className="flex gap-2 sm:gap-3">
             <input
               ref={inputRef}
               type="text"
