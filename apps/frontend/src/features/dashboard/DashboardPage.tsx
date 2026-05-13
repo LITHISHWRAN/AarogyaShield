@@ -302,7 +302,7 @@ export default function DashboardPage() {
               >
                 {turn.role === 'assistant' && (
                   <div className="shrink-0 h-7 w-7 rounded-full bg-brand-600 flex items-center justify-center text-[11px] font-bold text-white mb-0.5 shadow-sm">
-                    A
+                    <img src="/logo.png" alt="ShieldCare logo" className="h-4" />
                   </div>
                 )}
                 <div
