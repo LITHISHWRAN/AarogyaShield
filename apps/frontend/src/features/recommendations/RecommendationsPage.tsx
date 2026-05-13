@@ -71,13 +71,19 @@ export default function RecommendationsPage() {
             </h1>
             <p className="text-sm text-gray-500">Based on your profile and uploaded policy documents</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => navigate('/')}>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/')}
+              className="text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
+            >
               Update profile
-            </Button>
-            <Button size="sm" onClick={() => navigate('/chat')}>
-              Chat with advisor →
-            </Button>
+            </button>
+            <button
+              onClick={() => navigate('/chat')}
+              className="text-xs text-white bg-brand-600 hover:bg-brand-700 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap font-medium"
+            >
+              Chat with ShieldCare →
+            </button>
           </div>
         </div>
       </div>
