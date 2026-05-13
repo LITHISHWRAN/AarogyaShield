@@ -7,7 +7,7 @@ import DashboardPage from '@/features/dashboard/DashboardPage'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    // <div className="min-h-screen bg-gray-50 text-gray-900">
       <Routes>
         <Route path="/" element={<OnboardingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
@@ -16,6 +16,6 @@ export default function App() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Routes>
-    </div>
+    // </div>
   )
 }

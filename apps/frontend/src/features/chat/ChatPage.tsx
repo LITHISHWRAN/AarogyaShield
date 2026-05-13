@@ -70,9 +70,9 @@ export default function ChatPage() {
   const conditions = userProfile?.pre_existing_conditions.join(', ') || 'none declared'
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-gray-50">
+    <div className="flex w-screen h-screen h-[100dvh] overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r bg-white lg:flex">
+      <aside className="hidden w-72 shrink-0 flex-col border-r bg-white lg:flex">
         <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white">
@@ -139,7 +139,7 @@ export default function ChatPage() {
       </aside>
 
       {/* Main chat area */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex flex-1 flex-col min-w-0 max-w-full">
         {/* Mobile header */}
         <header className="flex items-center justify-between border-b bg-white px-4 py-3 lg:px-6">
           <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export default function ChatPage() {
         </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 sm:px-4 sm:py-6 sm:space-y-5 lg:px-6">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 sm:px-4 sm:py-6 sm:space-y-5 lg:px-8 xl:px-16">
           {/* Empty state with quick prompts */}
           {chatTurns.length === 0 && !loading && (
             <div className="flex flex-col items-center gap-4 pt-4 sm:gap-6 sm:pt-8">
@@ -241,7 +241,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input bar */}
-        <div className="border-t bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-3 lg:px-6">
+        <div className="border-t bg-white px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-4 sm:py-3 lg:px-8 xl:px-16">
           <div className="flex gap-2 sm:gap-3">
             <input
               ref={inputRef}

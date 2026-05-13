@@ -146,7 +146,7 @@ export default function DashboardPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ══ LEFT PANEL: Recommendations ══ */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 min-w-0">
           <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
 
             {/* Empathy note */}
@@ -231,8 +231,20 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="lg:hidden fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => navigate('/chat')}
+            className="flex items-center gap-2 bg-brand-600 text-white px-5 py-3 rounded-2xl shadow-lg text-sm font-semibold hover:bg-brand-700 transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z" />
+            </svg>
+            Ask ShieldCare
+          </button>
+        </div>
+
         {/* ══ RIGHT PANEL: Chat ══ */}
-        <div className="w-[380px] shrink-0 flex flex-col bg-white border-l border-gray-100 shadow-[-8px_0_24px_rgba(0,0,0,0.04)]">
+        <div className="hidden lg:flex w-[380px] xl:w-[440px] shrink-0 flex-col bg-white border-l border-gray-100 shadow-[-8px_0_24px_rgba(0,0,0,0.04)]">
 
           {/* Chat panel header */}
           <div className="shrink-0 px-5 py-4 border-b border-gray-100 bg-white">
