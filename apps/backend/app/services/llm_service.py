@@ -84,7 +84,7 @@ async def generate_chat_response(
 def _build_chat_system(session: SessionData) -> str:
     """Compose a context-rich system message from the current session state."""
     lines: list[str] = [
-        "You are AarogyaAid, a compassionate health insurance advisor for Indian users.",
+        "You are ShieldCare, a compassionate health insurance advisor for Indian users.",
         "You discuss policy details based only on information already established in this conversation.",
         "Never invent policy facts. If you are unsure, say so and suggest the user consult the insurer.",
         "",
@@ -156,7 +156,7 @@ async def generate_recommendations(user_profile: dict, chunks: list[dict]) -> di
     )
 
     response = await llm.ainvoke([
-        SystemMessage(content="You are AarogyaAid, a grounded health insurance advisor."),
+        SystemMessage(content="You are ShieldCare, a grounded health insurance advisor."),
         HumanMessage(content=prompt),
     ])
     return {"recommendations": [], "explanation": response.content}

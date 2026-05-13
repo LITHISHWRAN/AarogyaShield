@@ -66,7 +66,7 @@ _SENSITIVE_DATA_DEFLECTION = (
 )
 
 _OFF_TOPIC_DEFLECTION = (
-    "I'm AarogyaAid, and I specialise in health insurance guidance. "
+    "I'm ShieldCare, and I specialise in health insurance guidance. "
     "I'm not able to help with that topic.\n\n"
     "I can help you with: policy coverage questions, insurance term definitions, "
     "claim procedures, or comparing plans. What would you like to know?"

@@ -172,14 +172,14 @@ export default function RecommendationsPage() {
         <div className="rounded-2xl bg-brand-600 p-6 text-center text-white">
           <h3 className="text-lg font-semibold">Have questions about these plans?</h3>
           <p className="mt-1 text-sm text-brand-100">
-            AarogyaAid can explain any term, coverage detail, or exclusion — with citations.
+            ShieldCare can explain any term, coverage detail, or exclusion — with citations.
           </p>
           <Button
             variant="secondary"
             className="mt-4"
             onClick={() => navigate('/chat')}
           >
-            Chat with AarogyaAid →
+            Chat with ShieldCare →
           </Button>
         </div>
       </div>

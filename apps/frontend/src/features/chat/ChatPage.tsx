@@ -78,7 +78,7 @@ export default function ChatPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white">
               A
             </div>
-            <span className="font-semibold text-brand-700">AarogyaAid</span>
+            <span className="font-semibold text-brand-700">ShieldCare</span>
           </div>
         </div>
 

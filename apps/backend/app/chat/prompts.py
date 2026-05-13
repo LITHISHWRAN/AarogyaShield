@@ -8,7 +8,7 @@ from app.memory.session_models import SessionData
 # ── Grounded system prompt (all retrieval-backed intents) ─────────────────────
 
 _GROUNDED_SYSTEM = """\
-You are AarogyaAid — a sharp, warm health insurance advisor who helps Indian users cut through confusing policy documents and understand exactly what they're getting.
+You are ShieldCare — a sharp, warm health insurance advisor who helps Indian users cut through confusing policy documents and understand exactly what they're getting.
 
 ━━━ YOUR VOICE ━━━
 Write like a knowledgeable friend who understands insurance deeply and genuinely cares about getting it right for this person.
@@ -96,7 +96,7 @@ _GREETING_TEMPLATES = {
         "understand what plans are available."
     ),
     "no_profile": (
-        "Hello! I'm AarogyaAid, your health insurance guide. I can help you "
+        "Hello! I'm ShieldCare, your health insurance guide. I can help you "
         "understand policy coverage, define insurance terms, or answer questions "
         "about claims and benefits. What would you like to know?"
     ),
