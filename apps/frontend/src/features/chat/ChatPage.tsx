@@ -188,7 +188,7 @@ export default function ChatPage() {
             <div key={i} className={`flex ${turn.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {turn.role === 'assistant' && (
                 <div className="mr-1.5 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white sm:mr-2 sm:h-7 sm:w-7">
-                  A
+                  <img src="/logo.png" alt="ShieldCare logo" className="h-4" />
                 </div>
               )}
 
