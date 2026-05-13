@@ -76,7 +76,7 @@ export default function ChatPage() {
         <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white">
-              A
+              <img src="/logo.png" alt="ShieldCare logo" className="h-4" />
             </div>
             <span className="font-semibold text-brand-700">ShieldCare</span>
           </div>
@@ -144,7 +144,7 @@ export default function ChatPage() {
         <header className="flex items-center justify-between border-b bg-white px-4 py-3 lg:px-6">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-              A
+              <img src="/logo.png" alt="ShieldCare logo" className="h-4" />
             </div>
             <span className="font-semibold text-gray-800">ShieldCare</span>
           </div>
